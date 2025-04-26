@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <time.h>
 
 // ======================== Functions ========================
 void printSoduko();
@@ -32,8 +33,16 @@ int sudoku[9][9] = {
 
 int main()
 {
+    clock_t start, end;
+    double cpu_time_used;
 
+    start = clock();
     printf("%d  ", validateSoduko());
+    end = clock();
+
+    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    printf("\nTime taken: %f seconds\n", cpu_time_used);
+
     printf("\n");
     printf("\n");
     return 0;
