@@ -35,6 +35,7 @@ int main()
 
     printf("%d  ", validateSoduko());
     printf("\n");
+    printf("\n");
     return 0;
 }
 
