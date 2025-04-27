@@ -221,7 +221,7 @@ void *threadValidateRow(void *param)
     {
         isValid = false;
     }
-
+    free(sg);
     pthread_exit(0);
 }
 
@@ -232,6 +232,7 @@ void *threadValidateColumn(void *param)
     {
         isValid = false;
     }
+    free(sg);
     pthread_exit(0);
 }
 
@@ -243,5 +244,6 @@ void *threadValidateSubgrid(void *param)
     {
         isValid = false;
     }
+    free(sg);
     pthread_exit(0);
 }
