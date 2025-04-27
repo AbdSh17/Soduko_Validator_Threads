@@ -8,6 +8,8 @@
 
 #define NUMBER_OF_THREADS 27
 
+int isValid = true;
+
 // ======================== Functions ========================
 void validateMultipleSodukoGrids();
 bool validateSudoku(int[ROWS][COLUMNS]);
