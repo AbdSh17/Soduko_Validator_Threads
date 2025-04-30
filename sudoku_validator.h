@@ -7,6 +7,12 @@
 #define SUBGRID 3
 // ======================== Defines ========================
 
+// // ======================== Defines ========================
+// #define ROWS 25
+// #define COLUMNS 25
+// #define SUBGRID 5
+// // ======================== Defines ========================
+
 // ======================== Functions ========================
 void printsudoku(int[ROWS][COLUMNS]);
 void printSubgrid(int, int, int[ROWS][COLUMNS]);
