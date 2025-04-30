@@ -3,32 +3,34 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <time.h>
-#include "sudoku_validator.h"
 #include <pthread.h>
+#include "sudoku_validator.h"
 
-#define NUMBER_OF_THREADS 27
-// #define NUMBER_OF_THREADS 75
+#define NUMBER_OF_THREADS 11
+// #define NUMBER_OF_THREADS 27
 
 int isValid = true;
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
-// ======================== Functions ========================
+// ============== Struct Definition ==============
+typedef struct sudokuGridNode *sudokuGrid;
+typedef struct sudokuGridNode
+{
+    int index;
+    int (*sudoku)[COLUMNS];
+} sudokuGridNode;
+
+// ============== Function Prototypes ==============
 void validateMultipleSodukoGrids();
 bool validateSudoku(int[ROWS][COLUMNS]);
 void *threadValidateRow(void *);
 void *threadValidateColumn(void *);
 void *threadValidateSubgrid(void *);
-// ======================== Functions ========================
 
-typedef struct sudokuGridNode *sudokuGrid;
-
-struct sudokuGridNode
-{
-    int index;
-    int (*sudoku)[COLUMNS];
-};
-
+// ============== Main ==============
 int main()
 {
+
     int sudoku[25][25] = {
         {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
         {6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 1, 2, 3, 4, 5},
@@ -56,36 +58,38 @@ int main()
         {20, 21, 22, 23, 24, 25, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
         {25, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24}};
 
-    printf("================================\n");
-    printf("\t27 Threads APPROACH");
-    // printf("\t75 Threads APPROACH");
+    printf("====================================\n");
+    printf("\t11 Threads APPROACH");
+    // printf("\t27 Threads APPROACH");
     // printf("\n\t      25x25x5");
 
-    printf("\n================================\n");
+    printf("\n====================================\n");
 
     clock_t start, end;
     double cpu_time_used;
 
     start = clock();
     validateMultipleSodukoGrids();
-    // 25x25x25 approach test case
 
+    // 25x25x25 approach test case
     /*
-    if (validateSudoku(sudoku))
-    {
-        printf("✅ Valid\n");
-    }
-    else
-    {
-        printf("❌ Invalid\n");
-    }
-        */
+
+        if (validateSudoku(sudoku))
+        {
+            printf("✅ Valid\n");
+        }
+        else
+        {
+            printf("❌ Invalid\n");
+        }
+
+    */
 
     end = clock();
 
     cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-    printf("\nTime taken in 27 Threads approach: %f seconds\n", cpu_time_used);
-    // printf("\nTime taken in75 Threads approach: %f seconds\n", cpu_time_used);
+    printf("\nTime taken in 11 Threads approach: %f seconds\n", cpu_time_used);
+    // printf("\nTime taken in 27 Threads approach: %f seconds\n", cpu_time_used);
 
     printf("\n");
     printf("\n");
@@ -225,74 +229,85 @@ void validateMultipleSodukoGrids()
     }
 }
 
-bool validateSudoku(int sudoku[ROWS][COLUMNS])
-{
-    // reinitialize the global variables
-    isValid = true;
-
-    pthread_t threads[NUMBER_OF_THREADS];           // the thread identifiers
-    pthread_attr_t threads_attr[NUMBER_OF_THREADS]; // set of thread attributes
-
-    for (int i = 0; i < NUMBER_OF_THREADS; i++)
-    {
-        pthread_attr_init(&threads_attr[i]);                               // set the default attributes of the thread
-        sudokuGrid sg = (sudokuGrid)malloc(sizeof(struct sudokuGridNode)); // create the threads
-        // thread can only take (void *), so all the args i need to put in a struct
-        sg->index = i % (NUMBER_OF_THREADS / 3); // '3' options, row, column and subgrid
-        sg->sudoku = sudoku;
-        if (i < (NUMBER_OF_THREADS / 3))
-        {
-            pthread_create(&threads[i], &threads_attr[i], threadValidateRow, sg); // sends the first batch of threds
-        }
-        else if (i < 2 * (NUMBER_OF_THREADS / 3))
-        {
-            pthread_create(&threads[i], &threads_attr[i], threadValidateColumn, sg); // sends the second batch of threds
-        }
-
-        else
-        {
-            pthread_create(&threads[i], &threads_attr[i], threadValidateSubgrid, sg); // sends the third batch of threds
-        }
-    }
-
-    for (int i = 0; i < NUMBER_OF_THREADS; i++)
-    {
-        pthread_join(threads[i], NULL); // wait until each thread finished
-    }
-
-    return isValid;
-}
-
+// ============== Thread Functions ==============
 void *threadValidateRow(void *param)
 {
-    sudokuGrid sg = (sudokuGrid)(param); // cast the 'sg' to get its args
-    if (!validateRow(sg->index, sg->sudoku))
+    sudokuGrid sg = (sudokuGrid)(param);
+    for (int i = 0; i < ROWS; i++)
     {
-        isValid = false;
+        if (!validateRow(i, sg->sudoku))
+        {
+            isValid = false;
+        }
     }
-    free(sg);
     pthread_exit(0);
 }
 
 void *threadValidateColumn(void *param)
 {
-    sudokuGrid sg = (sudokuGrid)(param); // cast the 'sg' to get its args
-    if (!validateColumn(sg->index, sg->sudoku))
+    sudokuGrid sg = (sudokuGrid)(param);
+    for (int i = 0; i < COLUMNS; i++)
     {
-        isValid = false;
+        if (!validateColumn(i, sg->sudoku))
+        {
+            isValid = false;
+        }
     }
-    free(sg);
     pthread_exit(0);
 }
 
 void *threadValidateSubgrid(void *param)
 {
-    sudokuGrid sg = (sudokuGrid)(param); // cast the 'sg' to get its args
-    // an equation that convert from 012345678 -> 00 01 02 10 11 12 20 21 22
-    if (!validateSubgrid(sg->index / SUBGRID, sg->index % SUBGRID, sg->sudoku)) // takes ROW,COLUMN
+    sudokuGrid sg = (sudokuGrid)(param);
+    int row = (sg->index / SUBGRID);
+    int col = (sg->index % SUBGRID);
+
+    // sg->index / SUBGRID, sg->index % SUBGRID
+
+    if (!validateSubgrid(row, col, sg->sudoku))
     {
         isValid = false;
     }
-    free(sg);
     pthread_exit(0);
+}
+
+// ============== Main Validation Function ==============
+bool validateSudoku(int sudoku[ROWS][COLUMNS])
+{
+    isValid = true;
+
+    pthread_t threads[NUMBER_OF_THREADS];
+    pthread_attr_t attr;
+
+    pthread_attr_init(&attr);
+
+    for (int i = 0; i < NUMBER_OF_THREADS; i++)
+    {
+        sudokuGrid sg = malloc(sizeof(sudokuGridNode));
+        sg->sudoku = sudoku;
+
+        if (i == 0)
+        {
+            sg->index = 0;
+            pthread_create(&threads[i], &attr, threadValidateRow, sg);
+        }
+
+        else if (i == 1)
+        {
+            sg->index = 0;
+            pthread_create(&threads[i], &attr, threadValidateColumn, sg);
+        }
+        else
+        {
+            sg->index = i - 2;
+            pthread_create(&threads[i], &attr, threadValidateSubgrid, sg);
+        }
+    }
+
+    for (int i = 0; i < NUMBER_OF_THREADS; i++)
+    {
+        pthread_join(threads[i], NULL);
+    }
+
+    return isValid;
 }
